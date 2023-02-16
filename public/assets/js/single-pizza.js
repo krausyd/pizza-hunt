@@ -12,7 +12,7 @@ let pizzaId;
 function getPizza() {
   //get id of pizza
   const searchParams = new URLSearchParams(document.location.search.substring(1));
-  const pizzaId = searchParams.get('id');
+  pizzaId = searchParams.get('id');
   console.log(pizzaId);
 
   //get pizza info
@@ -127,7 +127,7 @@ function handleNewCommentSubmit(event) {
     console.log(comment);
     location.reload();
   }).catch(e => {
-    console.log(err);
+    console.log(e);
   });
 }
 
@@ -148,6 +148,25 @@ function handleNewReplySubmit(event) {
   }
 
   const formData = { writtenBy, replyBody };
+
+  fetch(`api/comments/${pizzaId}/${commentId}`, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(formData),
+  }).then(response => {
+    if (!response.ok) {
+      throw new Error('Something went wrong!');
+    }
+    response.json();
+  }).then(comment => {
+    console.log(comment);
+    location.reload();
+  }).catch(e => {
+    console.log(e);
+  });
 }
 
 $backBtn.addEventListener('click', function() {

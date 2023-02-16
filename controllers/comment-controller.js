@@ -47,6 +47,44 @@ const commentController = {
             return;
         };
     },
+
+    addReply({ params, body }, res) {
+        console.log(body);
+        Comment.findOneAndUpdate(
+            { _id: params.commentId },
+            { $push: { replies: body } },
+            { new: true },
+        ).then(dbPizzaData => {
+            if (!dbPizzaData) {
+                res.status(404).json({ message: 'No comment found with this id!' });
+                return;
+            }
+            res.json(dbPizzaData);
+        }).catch(e => {
+            console.log(e);
+            res.status(500).json(e);
+            return;
+        });
+    },
+
+    removeReply({ params }, res) {
+        console.log(params);
+        Comment.findOneAndUpdate(
+            { _id: params.commentId },
+            { $pull: { replies: { replyId: params.replyId } } },
+            { new: true },
+        ).then(dbPizzaData => {
+            if (!dbPizzaData) {
+                res.status(404).json({ message: 'No comment or reply found with that combination of ids!' });
+                return;
+            }
+            res.json(dbPizzaData);
+        }).catch(e => {
+            console.log(e);
+            res.status(500).json(e);
+            return;
+        });
+    },
 };
 
 module.exports = commentController;
