@@ -17,8 +17,7 @@ request.onsuccess = function(e) {
     db = e.target.result;
     // check if the app is online, if yes, we need to upload the pizza to send the local stored to api
     if (navigator.onLine) {
-        // TODO
-        //uploadPizza();
+        uploadPizza();
     }
 };
 
@@ -31,14 +30,55 @@ function saveRecord(record) {
     // open a transaction with the database, for read and write permissions
     const transaction = db.transaction(['new_pizza'], 'readwrite');
     
-    //acces the object store for new_pizza
+    //access the object store for new_pizza
     const pizzaObjectStore = transaction.objectStore('new_pizza');
-    console.log(pizzaObjectStore, record);
-
+    
     //add the record to the object store
     //add the record to the object store
     var request = pizzaObjectStore.add(record);
     request.onsuccess = function(e) {
         console.log('Stored in local storage, as offline')
     };
+}
+
+function uploadPizza() {
+    // open a transaction with the database, for read and write permissions
+    const transaction = db.transaction(['new_pizza'], 'readwrite');
+
+    //access the object store for pizzas that are locally stored
+    const pizzaObjectStore = transaction.objectStore('new_pizza');
+
+    // get all records from store and set to a variable
+    const getAll = pizzaObjectStore.getAll();
+    
+    //getall is asynchronous, so we need to handle it when successful
+    getAll.onsuccess = function() {
+        //if there was data, we need to send it to the api server
+        if (getAll.result.length > 0) {
+            fetch('/api/pizzas', {
+                method: 'POST',
+                body: JSON.stringify(getAll.result),
+                headers: {
+                    Accept: 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json',
+                }
+            }).then(response => response.json())
+            .then(serverResponse => {
+                if (serverResponse.message) {
+                    throw new Error(serverResponse.message);
+                }
+                // open one more transaction
+                const transaction = db.transaction(['new_pizza'], 'readwrite');
+                //access the object store
+                const pizzaObjectStore = transaction.objectStore('new_pizza');
+                //clear all the items in store, we don't want to double save
+                pizzaObjectStore.clear();
+
+                alert('All locally saved pizzas have been submitted! Thanks!');
+            }).catch(err => {
+                console.log(err);
+            });
+        }
+    };
+
 }
