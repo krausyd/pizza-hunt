@@ -82,3 +82,5 @@ function uploadPizza() {
     };
 
 }
+
+window.addEventListener('online', uploadPizza);
